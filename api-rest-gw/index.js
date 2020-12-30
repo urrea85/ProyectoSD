@@ -2,10 +2,6 @@
 
 //ID USUARIO NO EXISTENTE, PETA
 
-//cambiar repositorios github
-
-//tokens
-
 //reservas
 
 //api pago
@@ -61,6 +57,40 @@ app.param("colecciones", (request,response,next,colecciones)=>{
 });
 
 function auth(request,response,next){
+    //encontrar el token de la bbdd
+    
+
+
+    if(!request.params.id){
+        response.status(401).json({
+            result: 'KO',
+            mensaje: "No se especifica la id del usuario que realiza la llamada"
+        })
+        return next(new Error("Falta id usuario"));
+    }
+
+    //const queToken;
+    var collection = db.collection("usuarios");
+    collection.findOne({_id: id(request.params.id)},(err,elemento)=>{
+        if(err) response.json(`Id: ${request.params.id}, no válida`);
+
+        console.log(elemento);
+        //queToken = elemento.token;
+        TokenService.decodificaToken(elemento.token)
+        .then(userId =>{
+            console.log(`Usuario con ID: ${userId} autorizado`);
+            //request.params.token = elemento.token;
+            //return next();
+        })
+        .catch(err => response.status(401).json({
+            result: 'KO', 
+            mensaje: "Error autorizacion: Token caducado, debe identificarse nuevamente"
+        })
+        );
+      //  return next(new Error("Acceso no autorizado"));
+    }); 
+
+
     if(!request.headers.authorization){
         response.status(401).json({
             result: 'KO',
@@ -110,10 +140,18 @@ function isProveedor(request, response, next){
         queURL += `/${request.params.reserva}`;
     }
 
-    if(request.params.id){
-        queURL += `/${request.params.id}`;
+    /*if(!request.params.idProveedor){
+        
+    }else{
+        if(request.params.id){
+            queURL += `/${request.params.id}`;
+        }
+    }*/
+    if(request.params.idProveedor){
+        queURL += `/${request.params.idProveedor}`;
     }
 
+    console.log(queURL);
     return queURL;
 }
 ////////////////////////////////////////////////////
@@ -130,6 +168,16 @@ function createHashSalt(request, response, next){
         else{
             console.log(`Hash = ${hash}`);
             request.body.password = hash;
+            var collection = db.collection("usuarios");
+            collection.save({user: request.body.user,password: hash, token: null}, (err, elementoGuardado) =>{
+                if (err) return next(err);
+        
+                console.log(elementoGuardado);
+                response.status(201).json({
+                    result: 'OK',
+                    elemento: elementoGuardado
+                });
+            });
         }
     });
 
@@ -152,18 +200,9 @@ function verifyPassword(hash, request, response, next){
 app.post('/api/registrar', (request, response, next) => {
 
     const user = request.body;
+    
     createHashSalt(request, response, next);
 
-    var collection = db.collection("usuarios");
-    collection.save(user, (err, elementoGuardado) =>{
-        if (err) return next(err);
-
-        console.log(elementoGuardado);
-        response.status(201).json({
-            result: 'OK',
-            elemento: elementoGuardado
-        });
-    });
 });
 
 app.get('/api/identificar/:id', (request, response, next) => {
@@ -181,16 +220,22 @@ app.get('/api/identificar/:id', (request, response, next) => {
 
    
     //Creamos un token
-    const token = TokenService.creaToken(request.body);
+    const token = TokenService.creaToken(request.params.id);
 
-    //console.log(token);
+    console.log(token);
     console.log(`Usuario y contraseña correctos`);
     //Decodificar un token
     TokenService.decodificaToken(token)
         .then(userId =>{
-            response.json(`ID1: ${userId}`);
+            console.log(`Usuario con ID: ${userId} autenticado y autorizado correctamente`);
         })
-        .catch(err => console.log(err));
+        .catch(err => response.json(`Token caducado`));
+
+    var collection = db.collection("usuarios");//guardar por id
+    collection.update({_id: id(queID)}, {$set: {token: token}}, function(err, elementoGuardado) {
+        if (err || !elementoGuardado) response.json("Usuario no pudo ser autorizado");
+        else response.json("Usuario autorizado con nuevo Token");
+    });
 });
 
 /*bcrypt.hash( password, 10, (err, hash) => {
@@ -261,7 +306,7 @@ app.get('/api/:proveedores/:colecciones', (request,response,next) =>{
     });  
 });
 
-app.get('/api/:proveedores/:colecciones/:id', (request,response,next) =>{
+app.get('/api/:proveedores/:colecciones/:idProveedor', (request,response,next) =>{
     const queColeccion = request.params.colecciones;
     var queURL = isProveedor(request,response,next);
 
@@ -284,7 +329,7 @@ app.get('/api/:proveedores/:colecciones/:id', (request,response,next) =>{
 ///********************** */
 
 
-app.post('/api/:proveedores/:colecciones', auth,(request,response,next) => {
+app.post('/api/:proveedores/:colecciones/:id', auth,(request,response,next) => {
     const nuevoElemento = request.body;
     const queColeccion = request.params.colecciones;
    
@@ -350,10 +395,10 @@ app.post('/api/:proveedores/:colecciones', auth,(request,response,next) => {
 
 });
 
-app.put('/api/:proveedores/:colecciones/:id', auth, (request,response,next) =>{
+app.put('/api/:proveedores/:colecciones/:id/:idProveedor', auth, (request,response,next) =>{
     const nuevoElemento = request.body;
     const queColeccion = request.params.colecciones;
-    const queId = request.params.id;
+    const queId = request.params.idProveedor;
     var queURL = isProveedor(request,response,next);
     const queToken = request.params.token;
 
@@ -371,14 +416,14 @@ app.put('/api/:proveedores/:colecciones/:id', auth, (request,response,next) =>{
             response.json( {
                 result: 'OK',
                 colecciones: queColeccion,
-                elemento: json.elemento
+                elemento: nuevoElemento
             });
     });  
 });
 
-app.delete('/api/:proveedores/:colecciones/:id', auth, (request,response,next)=>{
+app.delete('/api/:proveedores/:colecciones/:id/:idProveedor', auth, (request,response,next)=>{
     const queColeccion = request.params.colecciones;
-    const queId = request.params.id;
+    const queId = request.params.idProveedor;
     var queURL = isProveedor(request,response,next);
     const queToken = request.params.token;
 
