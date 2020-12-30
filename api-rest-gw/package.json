@@ -1,0 +1,41 @@
+{
+  "name": "api-rest-gw",
+  "version": "1.0.0",
+  "description": "Proyecto de API RESTFUL con NODEJS y Express para SD",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/urrea85/ProyectoSD.git"
+  },
+  "keywords": [
+    "CRUD",
+    "WS",
+    "REST",
+    "node",
+    "express",
+    "mongo"
+  ],
+  "author": "Jose Antonio Urrea Garcia",
+  "license": "ISC",
+  "homepage": "https://github.com/urrea85/ProyectoSD.git#readme",
+  "dependencies": {
+    "async": "^3.2.0",
+    "bcrypt": "^5.0.0",
+    "express": "^4.17.1",
+    "fs": "0.0.1-security",
+    "jwt-simple": "^0.5.6",
+    "moment": "^2.29.1",
+    "mongodb": "^3.6.3",
+    "mongojs": "^3.1.0",
+    "morgan": "^1.10.0",
+    "node-fetch": "^2.6.1",
+    "xmlhttprequest": "^1.8.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
