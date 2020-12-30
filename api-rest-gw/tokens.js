@@ -20,7 +20,7 @@ const EXP_TIME = 7*24*60; //7 dias bb
 
 function creaToken(user){
     const payload ={
-        sub: user._id,
+        sub: user,
         iat: moment().unix(),
         exp: moment().add(EXP_TIME,'minutes').unix()
     };
