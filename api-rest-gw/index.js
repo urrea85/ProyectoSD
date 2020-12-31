@@ -273,7 +273,22 @@ app.get('/api', (request, response, next) =>{
 
 });
 
-//Declaramos nuestras rutas y nuestros controladores
+//MUESTRA RESERVAS DE USURAIO
+app.get('/api/reserva/:id', (request, response, next) => {
+
+    const queID = request.params.id;
+
+    var collection = db.collection("reserva");//guardar por id
+
+    collection.find({_id: id(queID)},(err,elemento)=>{
+        if(err) response.json(`Id: ${queID}, no tiene reservas`);
+
+        response.json(elemento);
+    }); 
+
+});
+
+//MUESTRA LOS PROVEEDORES
 app.get('/api/:proveedores', (request, response, next) =>{
 
     var queURL = isProveedor(request,response,next);
@@ -289,7 +304,7 @@ app.get('/api/:proveedores', (request, response, next) =>{
     });  
 
 });
-
+//MUESTRA LAS COLECCIONES DE LOS PROVEEDORES
 app.get('/api/:proveedores/:colecciones', (request,response,next) =>{
     const queColeccion = request.params.colecciones;
     var queURL = isProveedor(request,response,next);
@@ -328,37 +343,24 @@ app.get('/api/:proveedores/:colecciones/:idProveedor', (request,response,next) =
 ///********************** */
 ///********************** */
 
+app.post('/api/:proveedores/:colecciones/:id/:idProv', auth,(request,response,next) => {
 
-app.post('/api/:proveedores/:colecciones/:id', auth,(request,response,next) => {
-    const nuevoElemento = request.body;
     const queColeccion = request.params.colecciones;
-   
+    const nuevoElemento = {
+        idProveedor: request.params.idProv,
+        idUsuario: request.params.id
+    };
     const queToken = request.params.token;
     var queURL = isProveedor(request,response,next);
     //const newURL = queURL + `/${idProveedor}`;//para comprobar el proveedor si existe
+    console.log(queURL);
 
-    /*if(queColeccion == "reserva"){
+    if(queColeccion == "reserva"){
         
-        const idUsuario = request.body.idUsuario;
-        const idProveedor =``;
-
-        if(request.body.idVuelo){
-            idProveedor = request.body.idVuelo;
-
-        }else{
-            if(request.body.idHotel){
-                idProveedor = request.body.idHotel;
-            }else{
-                if(request.body.idVehiculo){
-                    idProveedor = request.body.idVehiculo;
-                }else{
-                    response.json(`Error: formato body no válido -> id(Proveedor): idVuelo, idVehiculo, idHotel.`)
-                }
-            }
-        }
-
-
-        //buscar en bbdd //5febd75a52c87e6b20984212
+        const idUsuario = request.params.id;
+        const idProveedor = request.params.idProv;
+        
+        //buscar en bbdd usuario
         request.collection.findOne({_id: id(idUsuario)},(err,elemento)=>{
             if(err)
                 response.json(`Error: id de Usuario no existe`);
@@ -366,14 +368,57 @@ app.post('/api/:proveedores/:colecciones/:id', auth,(request,response,next) => {
                 console.log(elemento);
         });
         
-        
+        const newURL = queURL + `/${idProveedor}`;//para comprobar el proveedor si existe
 
-        fetch( newURL )//5fec66ef70c63c0a55028e49
+        fetch( newURL )//buscar en bbdd proveedor
             .then( response=>response.json() )
             .then( json => {
-            response.json(json.elemento);
+            console.log(json.elemento);
         });  
-    }*/
+    }else{
+        response.json(`End-point inválido`);
+    }
+
+    fetch( queURL, {
+        method: 'POST',
+        body: JSON.stringify(nuevoElemento),
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${queToken}`
+        }    
+    } )
+        .then( response=>response.json() )
+        .then( json => {
+            //Mi logica de negocio
+            console.log( {
+                result: 'OK',
+                colecciones: queColeccion,
+                elemento: json.elemento
+            });
+            console.log(json.elemento._id);
+
+            //guardamos reserva en bbdd agencia
+
+            var collection = db.collection("reserva");
+            collection.save({_id: id(request.params.id),idReserva: json.elemento._id}, (err, elementoGuardado) =>{
+                if (err) return next(err);
+        
+                console.log(elementoGuardado);
+                response.status(201).json({
+                    result: 'OK',
+                    elemento: elementoGuardado
+                });
+            });
+    });  
+
+});
+
+app.post('/api/:proveedores/:colecciones/:id', auth,(request,response,next) => {
+    const nuevoElemento = request.body;
+    const queColeccion = request.params.colecciones;
+   
+    const queToken = request.params.token;
+    var queURL = isProveedor(request,response,next);
 
     fetch( queURL, {
         method: 'POST',
@@ -447,7 +492,7 @@ app.delete('/api/:proveedores/:colecciones/:id/:idProveedor', auth, (request,res
 
 
 https.createServer( OPTIONS_HTTPS, app ).listen(port, () => {
-    console.log(`WS API GW del WS REST CRUD ejecutandose en https://localhost:${port}/:colecciones/:id`)
+    console.log(`WS API GW del WS REST CRUD ejecutandose en https://localhost:${port}/api`)
 });
 /*
 app.listen(port, () => {
