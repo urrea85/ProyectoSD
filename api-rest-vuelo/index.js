@@ -1,6 +1,6 @@
 'use strict'
 
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3002;
 
 const https = require('https');
 const fs = require('fs');
@@ -18,7 +18,7 @@ const mongojs = require('mongojs');
 const app = express();
 
 //var db = mongojs('localhost:27017/sd'); //Conectamos con la DB
-var db = mongojs('mongodb+srv://urrea:1234@cluster0.p84hz.mongodb.net/vuelo?retryWrites=true&w=majority');
+var db = mongojs('mongodb+srv://urrea:1234@cluster0.p84hz.mongodb.net/hotel?retryWrites=true&w=majority');
 var id = mongojs.ObjectID;
 
 //Declaramos los middleware
@@ -96,7 +96,7 @@ app.get('/api/:colecciones/:id', (request,response,next) =>{
     });
 });
 
-app.post('/api/:colecciones', auth,(request,response,next) =>{
+/*app.post('/api/:colecciones', auth,(request,response,next) =>{
     const nuevoElemento = request.body;
     const queColeccion = request.params.colecciones;
     
@@ -110,12 +110,56 @@ app.post('/api/:colecciones', auth,(request,response,next) =>{
             elemento: elementoGuardado
         });
     });
+});*/
+
+app.post('/api/:colecciones', auth,(request,response,next) =>{
+    const nuevoElemento = request.body;
+    const queColeccion = request.params.colecciones;
+
+    if(queColeccion == "reserva"){
+        console.log(nuevoElemento.idProveedor);
+        const queID = JSON.stringify(nuevoElemento.idProveedor);
+        console.log(queID);
+        request.collection.findOne({"idProveedor": nuevoElemento.idProveedor},(err,elemento)=>{
+            
+            if(elemento != null && elemento.idProveedor == nuevoElemento.idProveedor){
+                response.json(`Error: reserva ya realizada`);
+            }else{
+                request.collection.save(nuevoElemento, (err, elementoGuardado) =>{
+                    if (err) return next(err);
+            
+                    console.log(elementoGuardado);
+                    response.status(201).json({
+                        result: 'OK',
+                        coleccion: queColeccion,
+                        elemento: elementoGuardado
+                    });
+                });
+            }
+        });
+    }else{
+        request.collection.save(nuevoElemento, (err, elementoGuardado) =>{
+            if (err) return next(err);
+    
+            console.log(elementoGuardado);
+            response.status(201).json({
+                result: 'OK',
+                coleccion: queColeccion,
+                elemento: elementoGuardado
+            });
+        });
+    }
+    
+
 });
+
+
+
+
 
 app.put('/api/:colecciones/:id', auth, (request,response,next) =>{
     const queColeccion = request.params.colecciones;
     const nuevosDatos = request.body;
-
     const queId = request.params.id;
     request.collection.update(
         { _id: id(queId)},
@@ -146,28 +190,6 @@ app.delete('/api/:colecciones/:id', auth, (request,response,next)=>{
         }
     );
 });
-
-///********************** */
-///********************** */
-///RESERVA
-///********************** */
-///********************** */
-
-//SOLUCIONAR ID CUALQUIERA Y USUARIO
-/*app.post('/api/reserva/:id', auth,(request,response,next) =>{
-    const queID = request.params.id;
-    var collection = db.collection("reserva");
-    collection.save({'_id': queID}, (err, elementoGuardado) =>{
-        if (err) return next(err);
-
-        console.log(elementoGuardado);
-        response.status(201).json({
-            result: 'OK',
-            elemento: elementoGuardado
-        });
-    });
-});
-*/
 
 https.createServer( OPTIONS_HTTPS, app ).listen(port, () => {
     console.log(`SEC WS API REST CRUD con DB ejecutandose en https://localhost:${port}/:colecciones/:id`)
