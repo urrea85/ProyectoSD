@@ -1,6 +1,6 @@
 'use strict'
 
-const port = process.env.PORT || 3002;
+const port = process.env.PORT || 3001;
 
 const https = require('https');
 const fs = require('fs');
@@ -18,7 +18,7 @@ const mongojs = require('mongojs');
 const app = express();
 
 //var db = mongojs('localhost:27017/sd'); //Conectamos con la DB
-var db = mongojs('mongodb+srv://urrea:1234@cluster0.p84hz.mongodb.net/hotel?retryWrites=true&w=majority');
+var db = mongojs('mongodb+srv://urrea:1234@cluster0.p84hz.mongodb.net/vehiculo?retryWrites=true&w=majority');
 var id = mongojs.ObjectID;
 
 //Declaramos los middleware
@@ -95,8 +95,8 @@ app.get('/api/:colecciones/:id', (request,response,next) =>{
         });
     });
 });
-
-/*app.post('/api/:colecciones', auth,(request,response,next) =>{
+/*
+app.post('/api/:colecciones', auth,(request,response,next) =>{
     const nuevoElemento = request.body;
     const queColeccion = request.params.colecciones;
     
@@ -110,8 +110,8 @@ app.get('/api/:colecciones/:id', (request,response,next) =>{
             elemento: elementoGuardado
         });
     });
-});*/
-
+});
+*/
 app.post('/api/:colecciones', auth,(request,response,next) =>{
     const nuevoElemento = request.body;
     const queColeccion = request.params.colecciones;
@@ -152,10 +152,6 @@ app.post('/api/:colecciones', auth,(request,response,next) =>{
     
 
 });
-
-
-
-
 
 app.put('/api/:colecciones/:id', auth, (request,response,next) =>{
     const queColeccion = request.params.colecciones;

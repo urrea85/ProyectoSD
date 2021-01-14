@@ -1,5 +1,5 @@
 {
-  "name": "api-rest-vuelo",
+  "name": "api-rest-vehiculo",
   "version": "1.0.0",
   "description": "Proyecto de API RESTFUL con NODEJS y Express para SD",
   "main": "index.js",
