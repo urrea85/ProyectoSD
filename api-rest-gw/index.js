@@ -245,7 +245,7 @@ app.post('/api/registrar', (request, response, next) => {
 
 });
 
-app.get('/api/identificar/:id', (request, response, next) => { //verificar password
+app.post('/api/identificar/:id', (request, response, next) => { //verificar password
 
     const queID = request.params.id;
     var hash = ``;
